@@ -1,68 +1,64 @@
-import { Component  } from 'react';
+import { useState, useEffect  } from 'react';
 import mjolnir from '../../resources/img/mjolnir.png';
 import './randomChar.scss';
 import MarvelService from '../../services/MarvelService';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMsg/ErrorMsg';
 
-class RandomChar extends Component {
-state = {
-    char: {},
-    loading: true,
-    error: false,
-}
+const RandomChar = () => {
 
-componentDidMount() {
-    this.updateChar();
-    // this.timerId = setInterval(this.updateChar, 3000);
-}
+    const [char, setChar] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
-// componentWillUnmount() {
-//     clearInterval(this.timerId);
-// }
-
-onError = () => {
-    this.setState({
-        loading: false,
-        error: true
-    })
-}
-
-marvelService = new MarvelService();
-
-onCharLoaded = (char) => {
-    if (char.description === '') {
-        char.description = 'lalala';
+    const updateChar = () => {
+        const id = Math.floor(Math.random() * (1011400-1011000) + 1011000)
+            marvelService
+            .getCharcter(id)
+            .then(onCharLoaded)
+            .catch(onError)
     }
-    if (char.description.length > 150) {
-        char.description = char.description.substring(0, 150)+"...";
+
+    useEffect(() => {
+        updateChar();
+        // timerId = setInterval(this.updateChar, 3000);
+        // return () =>
+        //    { clearInterval(timerId); }
+
+    }, [])
+
+
+
+    const onError = () => {
+        setLoading(false);
+        setError(true);
     }
-    this.setState({char, loading: false});
-}
 
-updateChar = () => {
-    const id = Math.floor(Math.random() * (1011400-1011000) + 1011000)
-    this.marvelService
-        .getCharcter(id)
-        .then(this.onCharLoaded)
-        .catch(this.onError)
-}
+    const marvelService = new MarvelService();
 
-btnUpdate = () => {
-    this.setState({
-        loading: true,
-        error: false,
-    })
-    this.updateChar();
-}
+    const onCharLoaded = (char) => {
+        if (char.description === '') {
+            char.description = 'lalala';
+        }
+        if (char.description.length > 150) {
+            char.description = char.description.substring(0, 150)+"...";
+        }
+        setLoading(false);
+        setChar(char);
+
+    }
 
 
 
-render() {
-    const {char, loading, error} = this.state;
+    const btnUpdate = () => {
+        setLoading(true);
+        setError(false);
+        updateChar();
+    }
+
     const errorMessage = error ? <ErrorMessage/> : null;
     const spiner = loading ? <Spinner/> : null;
-    const content = !(loading || error) ? <View char={char}/> : null;
+    const content = !(loading || error || !char) ? <View char={char}/> : null;
         return (
         <div className="randomchar">
             {errorMessage}
@@ -77,13 +73,12 @@ render() {
                     Or choose another one
                 </p>
                 <button className="button button__main">
-                    <div onClick={this.btnUpdate} className="inner">try it</div>
+                    <div onClick={btnUpdate} className="inner">try it</div>
                 </button>
                 <img src={mjolnir} alt="mjolnir" className="randomchar__decoration"/>
             </div>
         </div>
     )
-}
 }
 
 const View = ({char}) => {
